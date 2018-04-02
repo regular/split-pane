@@ -69,6 +69,21 @@ function setFlexBasis(e, delta, origPx, totalPx) {
     `${newPx * 100 / totalPx}%` : `${newPx}px`
 }
 
+function snap(leftPx, rightPx, totalPx, delta, snapRadius, snaps) {
+  snaps = snaps.map( x => x > 1 ? x : x * totalPx)
+  let ret = delta
+
+  snaps.forEach( s => {
+    if (Math.abs(leftPx + delta - s) <= snapRadius) {
+      ret = s - leftPx
+    }
+    if (Math.abs(rightPx - delta - s) <= snapRadius) {
+      ret = rightPx - s
+    }
+  })  
+  return ret
+}
+
 function makeDividerHandlers() {
   let tracking = false
   let left, right, parent
@@ -92,7 +107,10 @@ function makeDividerHandlers() {
     },
     'ev-pointermove': e => {
       if (!tracking) return
-      const delta = (horiz ? e.clientX : e.clientY) - clickPos
+      let delta = (horiz ? e.clientX : e.clientY) - clickPos
+
+      delta = snap(leftPx, rightPx, totalPx, delta, 10, [30, 60, 0.25, 0.5, 0.75])
+
       setFlexBasis(left, delta, leftPx, totalPx)
       setFlexBasis(right, -delta, rightPx, totalPx)
       e.preventDefault()
