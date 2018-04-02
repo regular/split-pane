@@ -36,6 +36,7 @@ paneA.appendChild(h('h1', 'This is pane A'))
 paneB.appendChild(h('h1', 'This is pane B'))
 paneC.appendChild(h('h1', 'This is pane C'))
 paneD.appendChild(h('h1', 'This is pane D'))
+paneE.appendChild(h('h1', 'This is pane E'))
 
 function makeSplitPane(horiz, children) {
   return h(`div.${horiz ? 'horizontal' : 'vertical'}-split-pane`, {
@@ -51,43 +52,60 @@ function makeSplitPane(horiz, children) {
   }, children)
 }
 
-function makeDivider() {
+function totalDividerSize(parent) {
+  return [].slice(parent.children).reduce((acc, e) => {
+    if (!e.classList.contains('divider')) return acc
+    const bb = e.getBoundingClientRect()
+    acc.width += bb.width
+    acc.height += bb.height
+    return acc
+  }, {width: 0, height: 0})
+}
 
-  function makeDividerHandlers() {
-    let tracking = false
-    let prev, next, parent
-    let origin
-    let currentPercentage, currentPx
-    let horiz
-    return {
-      'ev-pointerdown': e => {
-        e.target.setPointerCapture(e.pointerId)
-        tracking = true
-        prev = e.target.previousElementSibling
-        next = e.target.nextElementSibling
-        parent = e.target.parentElement
-        horiz = (parent.style['flex-direction'] || 'row') == 'row'
-        origin = horiz ? e.clientX : e.clientY
-        currentPercentage = parseFloat(prev.style['flex-basis'])
-        currentPx = prev.getBoundingClientRect()[ horiz ? 'width' : 'height']
-        e.preventDefault()
-      },
-      'ev-pointermove': e => {
-        if (!tracking) return
-        const delta = (horiz ? e.clientX : e.clientY) - origin
-        const newPrecentage = currentPercentage / currentPx * (currentPx + delta)
-        prev.style['flex-basis'] = `${newPrecentage}%`
-        next.style['flex-basis'] = `${100 - newPrecentage}%`
-        e.preventDefault()
-      },
-      'ev-pointerup': e => {
-        tracking = false
-        e.target.releasePointerCapture(e.pointerId)
-        e.preventDefault()
-      }
+function setFlexBasis(e, delta, origPx, totalPx) {
+  const fb = e.style['flex-basis']
+  const newPx = origPx + delta
+  e.style['flex-basis' ] = fb.includes('%') ?
+    `${newPx * 100 / totalPx}%` : `${newPx}px`
+}
+
+function makeDividerHandlers() {
+  let tracking = false
+  let left, right, parent
+  let horiz
+  let clickPos
+  let leftPx, rightPx, totalPx
+  return {
+    'ev-pointerdown': e => {
+      e.target.setPointerCapture(e.pointerId)
+      tracking = true
+      left = e.target.previousElementSibling
+      right = e.target.nextElementSibling
+      parent = e.target.parentElement
+      horiz = (parent.style['flex-direction'] || 'row') == 'row'
+      clickPos = horiz ? e.clientX : e.clientY
+      const dim = horiz ? 'width' : 'height'
+      totalPx = parent.getBoundingClientRect()[dim] - totalDividerSize(parent)[dim]
+      leftPx = left.getBoundingClientRect()[dim]
+      rightPx = right.getBoundingClientRect()[dim]
+      e.preventDefault()
+    },
+    'ev-pointermove': e => {
+      if (!tracking) return
+      const delta = (horiz ? e.clientX : e.clientY) - clickPos
+      setFlexBasis(left, delta, leftPx, totalPx)
+      setFlexBasis(right, -delta, rightPx, totalPx)
+      e.preventDefault()
+    },
+    'ev-pointerup': e => {
+      tracking = false
+      e.target.releasePointerCapture(e.pointerId)
+      e.preventDefault()
     }
   }
+}
 
+function makeDivider() {
   return h('div.divider',
     Object.assign({
       style: {
