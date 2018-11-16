@@ -1,5 +1,5 @@
 {
-  "name": "split-pane",
+  "name": "tre-split-pane",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
