@@ -1,44 +1,26 @@
-window.setImmediate = function(f) {
-  setTimeout(f, 0)
-}
 const h = require('mutant/html-element')
+const setStyles = require('module-styles')('spit-pane')
 
-document.body.style.height = '500px'
-
-document.body.appendChild(h('style', `
+setStyles(`
   .horizontal-split-pane > .divider {
     cursor: col-resize
   }
   .vertical-split-pane > .divider {
     cursor: row-resize
   }
-`))
+  .pane {
+    overflow: auto;
+  }
+`)
 
-let paneA, paneB, panceC, paneD, paneE
+module.exports = {
+  makeSplitPane,
+  makeDivider,
+  makePane
+}
 
-document.body.appendChild(
-  makeSplitPane(false, [
-    paneA = makePane('30%'),
-    makeDivider(),
-    makeSplitPane(true, [
-      paneB = makePane('70%'),
-      makeDivider(),
-      paneC = makePane('20%'),
-      makeDivider(),
-      paneD = makePane('10%')
-    ]),
-    makeDivider(),
-    paneE = makePane('30px')
-  ])
-)
-
-paneA.appendChild(h('h1', 'This is pane A'))
-paneB.appendChild(h('h1', 'This is pane B'))
-paneC.appendChild(h('h1', 'This is pane C'))
-paneD.appendChild(h('h1', 'This is pane D'))
-paneE.appendChild(h('h1', 'This is pane E'))
-
-function makeSplitPane(horiz, children) {
+function makeSplitPane(opts, children) {
+  const horiz = opts.horiz
   return h(`div.${horiz ? 'horizontal' : 'vertical'}-split-pane`, {
     style: {
       display: 'flex',
@@ -139,17 +121,15 @@ function makeDivider() {
   )
 }
 
-function makePane(flexBasis) {
+function makePane(flexBasis, children) {
   return h('div.pane', {
     style: {
-      background: 'khaki',
       'flex-basis': flexBasis,
       'flex-grow': 1,
       'flex-shrink': 1,
       'box-sizing': 'border-box',
-      'overflow': 'scroll',
       width: '100%',
       height: '100%'
     }
-  })
+  }, children)
 }
