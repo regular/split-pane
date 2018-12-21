@@ -114,8 +114,8 @@ function makeDivider() {
         'flex-shrink': 0,
         'user-select': 'none',
         'box-sizing': 'border-box',
-        width: '100%',
-        height: '100%'
+        'width': 'auto',
+        'height': 'auto'
       }}, makeDividerHandlers()
     )
   )
